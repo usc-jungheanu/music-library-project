@@ -4,10 +4,15 @@ import requests
 import base64
 import time
 
-# Spotify Credentials 'We should 
+
+
+# Backend Engineering / DB Management
+
+# Spotify Credentials (eventually set up as an env. variable)
 client_id = 'ee25b9c5e4fb4221a09e60fe877e63a2'
 client_secret = '33be200e61ad4caa9fa61b8331c00421'
 
+#reset token if when expired
 def get_spotify_access_token(client_id, client_secret):
     if 'spotify_token_expiry' not in st.session_state or time.time() > st.session_state.spotify_token_expiry:
         token_url = "https://accounts.spotify.com/api/token"
@@ -31,6 +36,7 @@ def get_spotify_access_token(client_id, client_secret):
             raise Exception("Could not obtain token from Spotify")
     return st.session_state.spotify_access_token
 
+# request spotify's api and query track data
 def search_spotify(query, client_id, client_secret):
     access_token = get_spotify_access_token(client_id, client_secret)
     headers = {
@@ -48,6 +54,7 @@ def search_spotify(query, client_id, client_secret):
     else:
         return None
 
+# request musicbrainz api and extract country code for artists nationality
 def get_musicbrainz_artist_country(artist_name):
     search_url = f"https://musicbrainz.org/ws/2/artist/"
     params = {
@@ -65,19 +72,46 @@ def get_musicbrainz_artist_country(artist_name):
             return artists[0].get('country', 'N/A')
     return 'N/A'
 
-st.title('Spotify Music Database')
 
-with st.form("search_form"):
-    search_query = st.text_input("Enter search query")
-    submitted = st.form_submit_button("Search")
-    if submitted and search_query:
-        search_results = search_spotify(search_query, client_id, client_secret)
-        if search_results:
-            for track in search_results:
-                artist_name = track['artists'][0]['name']
-                country = get_musicbrainz_artist_country(artist_name)
-                st.write(f"**{track['name']}** by {artist_name} ({country})")
-                st.write(f"Album: {track['album']['name']}, Release Date: {track['album']['release_date']}")
-                st.image(track['album']['images'][0]['url'], width=100)
-        else:
-            st.write("No results found.")
+
+
+
+
+
+
+# Frontend Development / UI/UX Design
+
+
+# Setup the layout
+
+st.sidebar.title("TuneSync")
+st.sidebar.header("Music Database Manager App")
+
+# Menu sidebar (consider moving to top or leave as-is)
+page = st.sidebar.selectbox("Menu", ["Browse Artists in Spotify", "Manage Music Library", "Settings"])
+
+if page == "Browse Artists in Spotify":
+    st.header("Browse Artists")
+
+    # search engine query to filter results by artist name, album name, song name
+    with st.form("search_form"):
+        search_query = st.text_input("Enter search query")
+        submitted = st.form_submit_button("Search")
+        if submitted and search_query:
+            search_results = search_spotify(search_query, client_id, client_secret)
+            if search_results:
+                for track in search_results:
+                    artist_name = track['artists'][0]['name']
+                    country = get_musicbrainz_artist_country(artist_name)
+                    st.write(f"**{track['name']}** by {artist_name} ({country})")
+                    st.write(f"Album: {track['album']['name']}, Release Date: {track['album']['release_date']}")
+                    st.image(track['album']['images'][0]['url'], width=100)
+            else:
+                st.write("No results found.")
+
+
+elif page == "Manage Music Library":
+    st.header("Manage Music Library")
+
+elif page == "Settings":
+    st.header("Settings")
